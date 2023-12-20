@@ -3,7 +3,6 @@ if os.getenv("DISABLE_GEMM") == "True":
     HAS_GEMM = False
 else:
     HAS_GEMM = True
-print(HAS_GEMM)
 import math
 import torch
 import torch.nn as nn
