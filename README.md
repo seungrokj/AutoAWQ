@@ -9,6 +9,7 @@ pip install -e .
 cd examples
 git-lfs clone https://huggingface.co/IlyasMoutawwakil/vicuna-7b-v1.5-awq-gemv
 # basic inference
+export DISABLE_GEMM="True"
 python basic_generate.py
 # wikitext PPL
 python eval.py --model_path vicuna-7b-v1.5-awq-gemv
