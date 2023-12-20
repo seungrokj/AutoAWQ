@@ -11,7 +11,14 @@ from awq.modules.act import ScaledActivation
 from huggingface_hub import snapshot_download
 from awq.quantize.quantizer import AwqQuantizer
 from transformers.modeling_utils import shard_checkpoint
-from awq.modules.linear import WQLinear_GEMM, WQLinear_GEMV
+
+if os.getenv("DISABLE_GEMM") == "True":
+    HAS_GEMM = False
+    from awq.modules.linear import WQLinear_GEMV
+else:
+    HAS_GEMM = True
+    from awq.modules.linear import WQLinear_GEMM, WQLinear_GEMV
+
 from awq.utils.module import get_named_linears, set_op_by_name
 from transformers import (
     AutoModelForCausalLM,
@@ -133,7 +140,7 @@ class BaseAWQForCausalLM(nn.Module):
     def from_quantized(self, model_path, model_type, model_filename='', 
                              max_new_tokens=None, torch_dtype=torch.float16, 
                              trust_remote_code=True, safetensors=True, is_quantized=True, 
-                             fuse_layers=False, version='GEMM',
+                             fuse_layers=False, version='GEMV',
                              device_map="balanced", offload_folder=None,
                              **config_kwargs):
         # [STEP 1-2] Load weights path and configs
@@ -170,7 +177,7 @@ class BaseAWQForCausalLM(nn.Module):
         return self(model, model_type, is_quantized=is_quantized, config=config, quant_config=quant_config)
 
     def _load_config(self, model_path, model_filename, safetensors=True, 
-                           version="GEMM", trust_remote_code=True, max_new_tokens=4096,
+                           version="GEMV", trust_remote_code=True, max_new_tokens=4096,
                            **config_kwargs):
         # [STEP 1] Download model if path is not a directory
         if not os.path.isdir(model_path):

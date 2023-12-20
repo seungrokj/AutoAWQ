@@ -25,7 +25,8 @@
 __device__ __forceinline__ float warp_reduce_sum(float sum) {
   #pragma unroll
   for(int i = 4; i >= 0; i--){
-    sum += __shfl_down_sync(0xffffffff, sum, 1<<i);
+    //sum += __shfl_down_sync(0xffffffff, sum, 1<<i);
+    sum += __shfl_down(sum, 1<<i);
   }
   /*
   // Equivalent to the following tree reduction implementation:

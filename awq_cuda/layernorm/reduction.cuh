@@ -40,7 +40,8 @@ __inline__ __device__ T warpReduceSum(T val)
 {
 #pragma unroll
     for (int mask = 16; mask > 0; mask >>= 1)
-        val = add(val, __shfl_xor_sync(FINAL_MASK, val, mask, 32));  //__shfl_sync bf16 return float when sm < 80
+        //val = add(val, __shfl_xor_sync(FINAL_MASK, val, mask, 32));  //__shfl_sync bf16 return float when sm < 80
+        val = add(val, __shfl_xor(val, mask, 32));  //__shfl_sync bf16 return float when sm < 80
     return val;
 }
 

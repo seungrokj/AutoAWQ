@@ -1,3 +1,9 @@
+import os
+if os.getenv("DISABLE_GEMM") == "True":
+    HAS_GEMM = False
+else:
+    HAS_GEMM = True
+print(HAS_GEMM)
 import math
 import torch
 import torch.nn as nn
@@ -209,8 +215,11 @@ class WQLinear_GEMV(nn.Module):
         if input_dtype != torch.float16:
             inputs = inputs.half()
         
-        if inputs.shape[0] > 8:
-            out = awq_inference_engine.gemmv2_forward_cuda(inputs, self.qweight, self.scales, self.qzeros, self.group_size, self.split_k_iters)
+        if HAS_GEMM == True:
+            if inputs.shape[0] > 8:
+                out = awq_inference_engine.gemmv2_forward_cuda(inputs, self.qweight, self.scales, self.qzeros, self.group_size, self.split_k_iters)
+            else:
+                out = awq_inference_engine.gemv_forward_cuda(inputs, self.qweight, self.scales, self.qzeros, self.group_size)
         else:
             out = awq_inference_engine.gemv_forward_cuda(inputs, self.qweight, self.scales, self.qzeros, self.group_size)
 

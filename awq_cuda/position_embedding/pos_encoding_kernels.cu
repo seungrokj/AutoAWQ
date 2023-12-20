@@ -37,8 +37,10 @@ __global__ void rotary_embedding_neox_kernel(
     const int out_x = token_idx * stride + head_idx * head_size + x_index;
     const int out_y = token_idx * stride + head_idx * head_size + y_index;
 
-    const scalar_t cos = __ldg(cache_ptr + x_index);
-    const scalar_t sin = __ldg(cache_ptr + y_index);
+    //const scalar_t cos = __ldg(cache_ptr + x_index);
+    //const scalar_t sin = __ldg(cache_ptr + y_index);
+    const scalar_t cos = *(cache_ptr + x_index);
+    const scalar_t sin = *(cache_ptr + y_index);
 
     const scalar_t q_x = query[token_head + x_index];
     const scalar_t q_y = query[token_head + y_index];

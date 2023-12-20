@@ -76,10 +76,6 @@ def get_generator_flag():
     
     return generator_flag
 
-def check_dependencies():
-    if CUDA_HOME is None:
-        raise RuntimeError(
-            f"Cannot find CUDA_HOME. CUDA must be available to build the package.")
 
 def get_compute_capabilities():
     # Collect the compute capabilities of all available GPUs.
@@ -99,10 +95,23 @@ def get_compute_capabilities():
 
     return capability_flags
 
-check_dependencies()
 include_dirs = get_include_dirs()
 generator_flags = get_generator_flag()
 arch_flags = get_compute_capabilities()
+
+def validate_and_update_archs(archs):
+    # List of allowed architectures
+    allowed_archs = ["native", "gfx90a"]
+
+    # Validate if each element in archs is in allowed_archs
+    assert all(
+        arch in allowed_archs for arch in archs
+    ), f"One of GPU archs of {archs} is invalid or not supported by Flash-Attention"
+
+"""build for ROCm platform"""
+archs = os.getenv("GPU_ARCHS", "native").split(";")
+validate_and_update_archs(archs)
+cc_flag = [f"--offload-arch={arch}" for arch in archs]
 
 if os.name == "nt":
     include_arch = os.getenv("INCLUDE_ARCH", "1") == "1"
@@ -113,22 +122,19 @@ if os.name == "nt":
     else:
         extra_compile_args={}
 else:
-    extra_compile_args={
-        "cxx": ["-g", "-O3", "-fopenmp", "-lgomp", "-std=c++17", "-DENABLE_BF16"],
+    extra_compile_args = {
+        "cxx": [
+            "-O3", 
+            "-std=c++17",
+        ],
         "nvcc": [
             "-O3", 
             "-std=c++17",
-            "-DENABLE_BF16",
             "-U__CUDA_NO_HALF_OPERATORS__",
             "-U__CUDA_NO_HALF_CONVERSIONS__",
-            "-U__CUDA_NO_BFLOAT16_OPERATORS__",
-            "-U__CUDA_NO_BFLOAT16_CONVERSIONS__",
-            "-U__CUDA_NO_BFLOAT162_OPERATORS__",
-            "-U__CUDA_NO_BFLOAT162_CONVERSIONS__",
-            "--expt-relaxed-constexpr",
-            "--expt-extended-lambda",
-            "--use_fast_math",
-        ] + arch_flags + generator_flags
+            f"--offload-arch=gfx90a",
+        ]
+        + cc_flag,
     }
 
 extensions = [
@@ -136,7 +142,7 @@ extensions = [
         "awq_inference_engine",
         [
             "awq_cuda/pybind_awq.cpp",
-            "awq_cuda/quantization/gemm_cuda_gen.cu",
+            #"awq_cuda/quantization/gemm_cuda_gen.cu",
             "awq_cuda/layernorm/layernorm.cu",
             "awq_cuda/position_embedding/pos_encoding_kernels.cu",
             "awq_cuda/quantization/gemv_cuda.cu"
@@ -150,8 +156,8 @@ if os.name != "nt":
             "ft_inference_engine",
             [
                 "awq_cuda/pybind_ft.cpp",
-                "awq_cuda/attention/ft_attention.cpp",
-                "awq_cuda/attention/decoder_masked_multihead_attention.cu"
+                #"awq_cuda/attention/ft_attention.cpp",
+                #"awq_cuda/attention/decoder_masked_multihead_attention.cu"
             ], extra_compile_args=extra_compile_args
         )
     )

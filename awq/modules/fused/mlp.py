@@ -1,7 +1,13 @@
+import os
 import torch.nn as nn
 import awq_inference_engine
 import torch.nn.functional as F
-from awq.modules.linear import WQLinear_GEMM, WQLinear_GEMV
+if os.getenv("DISABLE_GEMM") == "True":
+    HAS_GEMM = False
+    from awq.modules.linear import WQLinear_GEMV
+else:
+    HAS_GEMM = True
+    from awq.modules.linear import WQLinear_GEMM, WQLinear_GEMV
 
 
 class QuantFusedMLP(nn.Module):
@@ -27,12 +33,16 @@ class QuantFusedMLP(nn.Module):
         self.w_bit = gate_proj.w_bit
         self.down_proj = down_proj
 
-        if isinstance(down_proj, WQLinear_GEMV):
+        if HAS_GEMM == True:
+            if isinstance(down_proj, WQLinear_GEMV):
+                self.linear = awq_inference_engine.gemv_forward_cuda
+                self.group_size = down_proj.group_size
+            else:
+                self.linear = awq_inference_engine.gemm_forward_cuda
+                self.group_size = 8
+        else:
             self.linear = awq_inference_engine.gemv_forward_cuda
             self.group_size = down_proj.group_size
-        else:
-            self.linear = awq_inference_engine.gemm_forward_cuda
-            self.group_size = 8
 
         self.activation = activation
 

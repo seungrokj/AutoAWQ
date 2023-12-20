@@ -1,8 +1,7 @@
 from awq import AutoAWQForCausalLM
 from transformers import AutoTokenizer, TextStreamer
 
-quant_path = "TheBloke/zephyr-7B-beta-AWQ"
-
+quant_path = "vicuna-7b-v1.5-awq-gemv"
 # Load model
 model = AutoAWQForCausalLM.from_quantized(quant_path, fuse_layers=True)
 tokenizer = AutoTokenizer.from_pretrained(quant_path, trust_remote_code=True)
@@ -16,9 +15,7 @@ prompt_template = """\
 {prompt}</s>
 <|assistant|>"""
 
-prompt = "You're standing on the surface of the Earth. "\
-        "You walk one mile south, one mile west and one mile north. "\
-        "You end up exactly where you started. Where are you?"
+prompt = "where is seoul located ?"
 
 tokens = tokenizer(
     prompt_template.format(prompt=prompt), 

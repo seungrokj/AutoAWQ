@@ -11,7 +11,7 @@ class AwqConfig(PushToHubMixin):
     zero_point: bool = field(default=True)
     q_group_size: int = field(default=128)
     w_bit: int = field(default=4)
-    version: str = field(default="GEMM")
+    version: str = field(default="GEMV")
     config_file_name = "quant_config.json"
     modules_to_not_convert: Optional[List] = None
 
