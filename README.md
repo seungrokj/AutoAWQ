@@ -4,6 +4,7 @@ GEMV kernels are available now. Perf is okay only when batch_size = 1
 ```
 git clone https://github.com/casper-hansen/AutoAWQ
 cd AutoAWQ
+export PYPI_BUILD=1
 pip install -e .
 cd examples
 git-lfs clone https://huggingface.co/IlyasMoutawwakil/vicuna-7b-v1.5-awq-gemv
